@@ -1,0 +1,43 @@
+name: Go Build and Test
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  GO111MODULE: on
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.20
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: go mod download
+
+    - name: Make build
+      run: make build
+
+    - name: Run server (background)
+      run: |
+        ./bin/serve &
+        SERVER_PID=$!
+        echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+
+    - name: Run ping
+      run: ./bin/ping
+
+    - name: Kill server
+      run: kill $SERVER_PID
+
+    - name: Make clean
+      run: make clean
